@@ -6,8 +6,10 @@ import io.circe.refined.CirceCodecRefined
 import io.circe.{Codec, Decoder, Encoder}
 import model.dto.TitlesResponse
 import model.{Document, ParsedDocument}
+import mongo4cats.circe._
 
-package object circe extends CirceCodecRefined{
+
+package object circe extends CirceCodecRefined {
 
   implicit lazy val titlesResponseCodec: Codec[TitlesResponse] = deriveCodec[TitlesResponse]
 
@@ -15,5 +17,6 @@ package object circe extends CirceCodecRefined{
 
   implicit lazy val documentCodec: Codec[Document] = deriveCodec[Document]
 
-  implicit lazy val throwableCodec: Codec[Throwable] = Codec.from(Decoder[String].map(str => new Exception(str)), Encoder[String].contramap[Throwable](_.getMessage))
+  implicit lazy val throwableCodec: Codec[Throwable] =
+    Codec.from(Decoder[String].map(str => new Exception(str)), Encoder[String].contramap[Throwable](_.getMessage))
 }

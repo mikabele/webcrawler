@@ -6,7 +6,8 @@ lazy val core = (project in file("core"))
   .settings(
     name := "core",
     libraryDependencies ++= Seq(
-      "eu.timepit" %% "refined" % "0.11.2"
+      "eu.timepit"         %% "refined"         % "0.11.2",
+      "io.github.kirill5k" %% "mongo4cats-core" % "0.7.8"
     )
   )
 
@@ -34,7 +35,14 @@ lazy val crawlerService = (project in file("crawler"))
 lazy val docService = (project in file("document"))
   .settings(
     name := "doc-service",
-    libraryDependencies ++= Seq()
+    libraryDependencies ++= Seq(
+      "io.github.kirill5k" %% "mongo4cats-core"  % "0.7.8",
+      "io.github.kirill5k" %% "mongo4cats-circe" % "0.7.6",
+      "com.github.fd4s"    %% "fs2-kafka"        % "3.5.1",
+      "io.circe"           %% "circe-core"       % "0.14.9",
+      "io.circe"           %% "circe-generic"    % "0.14.9",
+      "io.scalaland"       %% "chimney"          % "1.5.0"
+    )
   )
   .dependsOn(core)
   .aggregate(core)

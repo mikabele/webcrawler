@@ -31,10 +31,12 @@ import scala.concurrent.duration._
 
 object CrawlerServer extends IOApp.Simple {
 
+  override def run: IO[Unit] = bootstrap[IO].use(_ => IO.never)
+
   private def bootstrap[F[_]: Async: Log] = {
     val cacheConfig = RedisDocumentCacheConfig(7.days)
     val parsedDocEpi = SplitEpi[String, ParsedDocument](
-      str => decode[ParsedDocument](str).getOrElse(ParsedDocument("")),
+      str => decode[ParsedDocument](str).getOrElse(ParsedDocument("", "", "")),
       _.asJson.noSpaces
     )
     val redisCodec = Codecs.derive(RedisCodec.Utf8, parsedDocEpi)
@@ -71,6 +73,4 @@ object CrawlerServer extends IOApp.Simple {
       .withHttpApp(interpretedRoutes)
       .build
   }
-
-  override def run: IO[Unit] = bootstrap[IO].use(_ => IO.never)
 }

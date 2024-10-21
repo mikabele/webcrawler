@@ -11,5 +11,5 @@ object DocumentMapper {
     doc.url -> doc.transformInto[ParsedDocument]
 
   def toParsedDocument(doc: JSoupDocument): ParsedDocument =
-    ParsedDocument(doc.title())
+    ParsedDocument(doc.title(), doc.baseUri(), doc.html())
 }

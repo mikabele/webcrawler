@@ -7,8 +7,8 @@ import sttp.tapir._
 import sttp.tapir.json.circe.jsonBody
 
 object CrawlerEndpoints {
-  val getTitlesEndpoint = endpoint
-    .get
+
+  val getTitlesEndpoint = endpoint.get
     .in("titles")
     .in(queryParams)
     .out(jsonBody[TitlesResponse])

@@ -1,6 +1,5 @@
 package implicits
 
-import cats.implicits.catsSyntaxOptionId
 import model.dto.TitlesResponse
 import sttp.tapir.Schema
 
