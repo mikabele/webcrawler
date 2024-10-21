@@ -1,8 +1,8 @@
 package storage
 
 import model.Document
-import model.types.UrlString
 
 trait DocumentRepository[F[_]] {
-  def getManyByUrl(urls: Seq[UrlString]) : F[Either[Throwable, Seq[Document]]]
+  def saveAll(documents: Seq[Document]): F[Either[Throwable, Unit]]
+  def save(document: Document): F[Either[Throwable, Unit]]
 }
