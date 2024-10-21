@@ -19,5 +19,5 @@ case class CrawlerHandler[F[_]: Functor](crawlerService: CrawlerService[F]) exte
       EitherT(crawlerService.getTitles(urls)).map(titlesMap => TitlesResponse(titlesMap)).value
     }
 
-  override def endpoint: List[ServerEndpoint[Any, F]] = List(getTitles)
+  override def endpoints: List[ServerEndpoint[Any, F]] = List(getTitles)
 }

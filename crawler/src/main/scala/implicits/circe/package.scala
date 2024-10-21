@@ -1,14 +1,19 @@
 package implicits
 
-import io.circe.{Codec, Decoder, Encoder}
-import io.circe.refined.CirceCodecRefined
+import io.circe.Decoder._
 import io.circe.generic.semiauto._
+import io.circe.refined.CirceCodecRefined
+import io.circe.{Codec, Decoder, Encoder}
 import model.dto.TitlesResponse
-import model.types.UrlString
+import model.{Document, ParsedDocument}
 
 package object circe extends CirceCodecRefined{
 
-  implicit lazy val urlStringEncoder: Encoder[UrlString] = refinedEncoder
-
   implicit lazy val titlesResponseCodec: Codec[TitlesResponse] = deriveCodec[TitlesResponse]
+
+  implicit lazy val parsedDocumentCodec: Codec[ParsedDocument] = deriveCodec[ParsedDocument]
+
+  implicit lazy val documentCodec: Codec[Document] = deriveCodec[Document]
+
+  implicit lazy val throwableCodec: Codec[Throwable] = Codec.from(Decoder[String].map(str => new Exception(str)), Encoder[String].contramap[Throwable](_.getMessage))
 }
