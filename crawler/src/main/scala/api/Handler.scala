@@ -6,5 +6,5 @@ import sttp.tapir.server.ServerEndpoint.Full
 
 trait Handler[F[_]] {
 
-  def endpoint: List[ServerEndpoint[Any, F]]
+  def endpoints: List[ServerEndpoint[Any, F]]
 }
