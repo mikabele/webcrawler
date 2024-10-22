@@ -1,13 +1,12 @@
 import _root_.consumer.DocumentConsumer
 import cats.effect.{Async, IO, IOApp, Resource}
 import cats.syntax.all._
+import document.document.{Document => KafkaDocument}
 import fs2.kafka.Deserializer._
 import fs2.kafka._
-import implicits.circe.parsedDocumentCodec
 import implicits.mongo.documentMongoCodec
-import io.circe.parser.decode
 import logic.impl.DocumentServiceImpl
-import model.{Document, ParsedDocument}
+import model.Document
 import mongo4cats.client.MongoClient
 import storage.mongo.MongoDocumentRepository
 
@@ -26,12 +25,9 @@ object DocumentConsumerApp extends IOApp.Simple {
     documentConsumer = DocumentConsumer[F](consumer, documentService)
   } yield documentConsumer
 
-  def buildConsumer[F[_]: Async]: Resource[F, KafkaConsumer[F, Option[String], ParsedDocument]] = {
+  def buildConsumer[F[_]: Async]: Resource[F, KafkaConsumer[F, Option[String], KafkaDocument]] = {
     val keyDeserializer = GenericDeserializer[F, Option[String]]
-    val valueDeserializer =
-      GenericDeserializer[F].map(barr =>
-        decode[ParsedDocument](String.valueOf(barr)).getOrElse(ParsedDocument("", "", ""))
-      )
+    val valueDeserializer = GenericDeserializer[F].map(KafkaDocument.parseFrom)
     val kafkaConsumerSettings = ConsumerSettings(keyDeserializer, valueDeserializer)
     KafkaConsumer
       .resource(
@@ -40,6 +36,6 @@ object DocumentConsumerApp extends IOApp.Simple {
           .withGroupId("document-service-consumer")
           .withAutoOffsetReset(AutoOffsetReset.Latest)
       )
-      .evalTap(_.subscribeTo("test"))
+      .evalTap(_.subscribeTo("documents_topic"))
   }
 }

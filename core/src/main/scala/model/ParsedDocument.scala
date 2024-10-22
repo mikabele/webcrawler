@@ -1,8 +1,5 @@
 package model
 
-import model.types.UrlString
-
 case class ParsedDocument(
-    title: String,
-    url: UrlString,
+    title: Option[String],
     htmlText: String)
