@@ -3,4 +3,11 @@ package model
 import model.types.UrlString
 import mongo4cats.bson.ObjectId
 
-case class Document(_id: ObjectId, title: String, url: UrlString, htmlText: String)
+import java.time.Instant
+
+case class Document(
+    _id: ObjectId,
+    title: Option[String],
+    url: UrlString,
+    htmlText: String,
+    lastUpdated: Instant)

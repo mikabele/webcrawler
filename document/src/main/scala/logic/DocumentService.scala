@@ -1,7 +1,7 @@
 package logic
 
-import model.ParsedDocument
+import document.document.Document
 
 trait DocumentService[F[_]] {
-  def processDocument(doc: ParsedDocument): F[Either[Throwable, Unit]]
+  def processDocument(doc: Document): F[Either[Throwable, Unit]]
 }

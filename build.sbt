@@ -26,7 +26,12 @@ lazy val crawlerService = (project in file("crawler"))
       "io.github.kirill5k"          %% "mongo4cats-circe"        % "0.7.6",
       "com.github.fd4s"             %% "fs2-kafka"               % "3.5.1",
       "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % "1.11.7",
-      "org.http4s"                  %% "http4s-ember-server"     % "0.23.27"
+      "org.http4s"                  %% "http4s-ember-server"     % "0.23.27",
+      "com.thesamet.scalapb"        %% "scalapb-runtime"         % scalapb.compiler.Version.scalapbVersion % "protobuf"
+    ),
+    Compile / PB.protoSources := Seq(file("schema_registry")),
+    Compile / PB.targets := Seq(
+      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
     )
   )
   .dependsOn(core)
@@ -36,12 +41,17 @@ lazy val docService = (project in file("document"))
   .settings(
     name := "doc-service",
     libraryDependencies ++= Seq(
-      "io.github.kirill5k" %% "mongo4cats-core"  % "0.7.8",
-      "io.github.kirill5k" %% "mongo4cats-circe" % "0.7.6",
-      "com.github.fd4s"    %% "fs2-kafka"        % "3.5.1",
-      "io.circe"           %% "circe-core"       % "0.14.9",
-      "io.circe"           %% "circe-generic"    % "0.14.9",
-      "io.scalaland"       %% "chimney"          % "1.5.0"
+      "io.github.kirill5k"   %% "mongo4cats-core"  % "0.7.8",
+      "io.github.kirill5k"   %% "mongo4cats-circe" % "0.7.6",
+      "com.github.fd4s"      %% "fs2-kafka"        % "3.5.1",
+      "io.circe"             %% "circe-core"       % "0.14.9",
+      "io.circe"             %% "circe-generic"    % "0.14.9",
+      "io.scalaland"         %% "chimney"          % "1.5.0",
+      "com.thesamet.scalapb" %% "scalapb-runtime"  % scalapb.compiler.Version.scalapbVersion % "protobuf"
+    ),
+    Compile / PB.protoSources := Seq(file("schema_registry")),
+    Compile / PB.targets := Seq(
+      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
     )
   )
   .dependsOn(core)
@@ -49,8 +59,20 @@ lazy val docService = (project in file("document"))
 
 lazy val refresher = (project in file("refresher"))
   .settings(
-    name := "refresher",
-    libraryDependencies ++= Seq()
+    name := "refresher-tasks",
+    libraryDependencies ++= Seq(
+      "com.themillhousegroup" %% "scoup"            % "1.0.0",
+      "io.scalaland"          %% "chimney"          % "1.5.0",
+      "com.github.fd4s"       %% "fs2-kafka"        % "3.5.1",
+      "io.circe"              %% "circe-core"       % "0.14.9",
+      "io.circe"              %% "circe-generic"    % "0.14.9",
+      "io.github.kirill5k"    %% "mongo4cats-circe" % "0.7.6",
+      "com.thesamet.scalapb"  %% "scalapb-runtime"  % scalapb.compiler.Version.scalapbVersion % "protobuf"
+    ),
+    Compile / PB.protoSources := Seq(file("schema_registry")),
+    Compile / PB.targets := Seq(
+      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
+    )
   )
   .dependsOn(core)
   .aggregate(core)
@@ -59,3 +81,4 @@ lazy val root = (project in file("."))
   .settings(
     name := "webcrawler"
   )
+  .aggregate(refresher, crawlerService, docService)

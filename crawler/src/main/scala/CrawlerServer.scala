@@ -10,6 +10,7 @@ import dev.profunktor.redis4cats.codecs.splits.SplitEpi
 import dev.profunktor.redis4cats.data.RedisCodec
 import dev.profunktor.redis4cats.effect.Log
 import dev.profunktor.redis4cats.effect.Log.Stdout.instance
+import document.document.{Document => KafkaDocument}
 import fs2.kafka.{GenericSerializer, KafkaProducer, ProducerSettings}
 import implicits.circe.parsedDocumentCodec
 import implicits.mongo.documentMongoCodec
@@ -36,12 +37,12 @@ object CrawlerServer extends IOApp.Simple {
   private def bootstrap[F[_]: Async: Log] = {
     val cacheConfig = RedisDocumentCacheConfig(7.days)
     val parsedDocEpi = SplitEpi[String, ParsedDocument](
-      str => decode[ParsedDocument](str).getOrElse(ParsedDocument("", "", "")),
+      str => decode[ParsedDocument](str).getOrElse(ParsedDocument(None, "")),
       _.asJson.noSpaces
     )
     val redisCodec = Codecs.derive(RedisCodec.Utf8, parsedDocEpi)
     val keySerializer = GenericSerializer[F, Option[String]]
-    val valueSerializer = GenericSerializer[F].contramap[ParsedDocument](doc => doc.asJson.toString().getBytes)
+    val valueSerializer = GenericSerializer[F].contramap[KafkaDocument](doc => doc.toByteArray)
     for {
       mongoClient <- MongoClient.fromConnectionString[F]("mongodb://localhost:27017")
       mongoCollection <- Resource.eval(
@@ -51,7 +52,7 @@ object CrawlerServer extends IOApp.Simple {
       redis <- Redis[F].simple("redis://localhost:6379", redisCodec)
       docCache = RedisDocumentCache(redis, cacheConfig)
       parserClient = ParserClientImpl[F]()
-      kafkaProducer <- KafkaProducer.resource[F, Option[String], ParsedDocument](
+      kafkaProducer <- KafkaProducer.resource[F, Option[String], KafkaDocument](
         ProducerSettings(keySerializer, valueSerializer).withBootstrapServers("localhost:9092")
       )
       crawlerService = CrawlerServiceImpl(docCache, documentRepository, parserClient, kafkaProducer)

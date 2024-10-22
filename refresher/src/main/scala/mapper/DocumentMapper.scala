@@ -1,10 +1,10 @@
 package mapper
 
+import document.document.{Document => KafkaDocument}
 import io.scalaland.chimney.dsl._
 import model.types.UrlString
 import model.{Document, ParsedDocument}
 import org.jsoup.nodes.{Document => JSoupDocument}
-import document.document.{Document => KafkaDocument}
 
 object DocumentMapper {
 

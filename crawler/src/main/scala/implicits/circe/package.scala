@@ -8,8 +8,12 @@ import model.dto.TitlesResponse
 import model.{Document, ParsedDocument}
 import mongo4cats.circe._
 
+import java.time.Instant
+
 
 package object circe extends CirceCodecRefined {
+
+  implicit lazy val instantCodec: Codec[Instant] = Codec.from(instantDecoder, instantEncoder)
 
   implicit lazy val titlesResponseCodec: Codec[TitlesResponse] = deriveCodec[TitlesResponse]
 
