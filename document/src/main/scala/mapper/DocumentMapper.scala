@@ -1,9 +1,9 @@
 package mapper
 
-import io.scalaland.chimney.dsl._
-import model.{Document, ParsedDocument}
-import mongo4cats.bson.ObjectId
 import document.document.{Document => KafkaDocument}
+import io.scalaland.chimney.dsl._
+import model.Document
+import mongo4cats.bson.ObjectId
 
 import java.time.Instant
 
