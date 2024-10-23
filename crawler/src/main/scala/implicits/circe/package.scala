@@ -10,7 +10,6 @@ import mongo4cats.circe._
 
 import java.time.Instant
 
-
 package object circe extends CirceCodecRefined {
 
   implicit lazy val instantCodec: Codec[Instant] = Codec.from(instantDecoder, instantEncoder)

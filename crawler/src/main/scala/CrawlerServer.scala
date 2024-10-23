@@ -4,6 +4,7 @@ import cats.effect.kernel.Async
 import cats.effect.{IO, IOApp, Resource}
 import cats.syntax.all._
 import com.comcast.ip4s._
+import config.AppConfig
 import dev.profunktor.redis4cats.Redis
 import dev.profunktor.redis4cats.codecs.Codecs
 import dev.profunktor.redis4cats.codecs.splits.SplitEpi
@@ -13,6 +14,8 @@ import dev.profunktor.redis4cats.effect.Log.Stdout.instance
 import document.document.{Document => KafkaDocument}
 import fs2.kafka.{GenericSerializer, KafkaProducer, ProducerSettings}
 import implicits.circe.parsedDocumentCodec
+import implicits.config.appConfigReader
+import implicits.kafka.kafkaGeneratedMessageSerializer
 import implicits.mongo.documentMongoCodec
 import io.circe.parser.decode
 import io.circe.syntax._
@@ -21,6 +24,7 @@ import mongo4cats.client._
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import parser.impl.ParserClientImpl
+import pureconfig.ConfigSource
 import service.impl.CrawlerServiceImpl
 import storage.mongo.MongoDocumentRepository
 import storage.redis.RedisDocumentCache
@@ -34,26 +38,27 @@ object CrawlerServer extends IOApp.Simple {
 
   override def run: IO[Unit] = bootstrap[IO].use(_ => IO.never)
 
-  private def bootstrap[F[_]: Async: Log] = {
+  private def bootstrap[F[_]: Async: Log]: Resource[F, Server] = {
     val cacheConfig = RedisDocumentCacheConfig(7.days)
     val parsedDocEpi = SplitEpi[String, ParsedDocument](
       str => decode[ParsedDocument](str).getOrElse(ParsedDocument(None, "")),
       _.asJson.noSpaces
     )
     val redisCodec = Codecs.derive(RedisCodec.Utf8, parsedDocEpi)
-    val keySerializer = GenericSerializer[F, Option[String]]
-    val valueSerializer = GenericSerializer[F].contramap[KafkaDocument](doc => doc.toByteArray)
+
     for {
-      mongoClient <- MongoClient.fromConnectionString[F]("mongodb://localhost:27017")
+      appConf <- Resource.pure(ConfigSource.default.loadOrThrow[AppConfig])
+      mongoClient <- MongoClient.fromConnectionString[F](appConf.mongoConfig.connectionString)
       mongoCollection <- Resource.eval(
-        mongoClient.getDatabase("test").flatMap(_.getCollectionWithCodec[Document]("documents"))
+        mongoClient.getDatabase(appConf.mongoConfig.database).flatMap(_.getCollectionWithCodec[Document]("documents"))
       )
       documentRepository = MongoDocumentRepository(mongoCollection)
-      redis <- Redis[F].simple("redis://localhost:6379", redisCodec)
+      redis <- Redis[F].simple(appConf.redisConfig.connectionString, redisCodec)
       docCache = RedisDocumentCache(redis, cacheConfig)
       parserClient = ParserClientImpl[F]()
       kafkaProducer <- KafkaProducer.resource[F, Option[String], KafkaDocument](
-        ProducerSettings(keySerializer, valueSerializer).withBootstrapServers("localhost:9092")
+        ProducerSettings(GenericSerializer[F, Option[String]], GenericSerializer[F, KafkaDocument])
+          .withBootstrapServers(appConf.kafkaConfig.bootstrapServers)
       )
       crawlerService = CrawlerServiceImpl(docCache, documentRepository, parserClient, kafkaProducer)
       crawlerHandler = CrawlerHandler(crawlerService)

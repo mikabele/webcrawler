@@ -5,7 +5,6 @@ import cats.syntax.all._
 import document.document.Document
 import fs2.kafka.KafkaConsumer
 import logic.DocumentService
-import model.ParsedDocument
 
 case class DocumentConsumer[F[_]: Monad](
     kafkaConsumer: KafkaConsumer[F, Option[String], Document],
